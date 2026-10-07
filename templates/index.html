@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Solo AI Studio — Multi-Tenant Intelligence Gateway</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+  <div class="max-w-6xl mx-auto px-6 py-8">
+    
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-6 mb-6 gap-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          Solo AI Studio
+          <span class="text-xs bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full font-mono font-medium">Multi-Tenant v1.2</span>
+        </h1>
+        <p class="text-xs text-slate-400">Deterministic Intelligence Engine & Governance Gateway</p>
+      </div>
+
+      <!-- Key Input & Live Status -->
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-2">
+          <input id="apiKey" type="password" placeholder="Enter x-api-key" value="dev_secret_key_123"
+                 class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 w-52 font-mono" />
+          <button onclick="refreshUsage()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 transition">
+            Check
+          </button>
+        </div>
+
+        <!-- Quota Pill -->
+        <div id="quotaCard" class="hidden bg-slate-800/80 border border-slate-700 px-3 py-1 rounded-lg text-xs flex items-center gap-2 font-mono">
+          <span id="tenantLabel" class="text-slate-300 font-semibold">Tenant</span>
+          <span class="text-slate-600">|</span>
+          <span class="text-slate-400">Quota:</span>
+          <span id="quotaRemaining" class="text-indigo-400 font-bold">--</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="flex gap-4 border-b border-slate-800 mb-6 text-xs font-semibold">
+      <button id="tabBtnStudio" onclick="switchTab('studio')" class="pb-2 border-b-2 border-indigo-500 text-indigo-400 transition">
+        Intelligence Studio
+      </button>
+      <button id="tabBtnProvision" onclick="switchTab('provision')" class="pb-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">
+        Tenant Provisioning & Governance
+      </button>
+    </div>
+
+    <!-- TAB 1: Studio Ingestion Workspace -->
+    <main id="tabStudio" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Input Workspace -->
+      <section class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-6 flex flex-col justify-between">
+        <div>
+          <h2 class="text-base font-semibold mb-1">Ingest Unstructured Input</h2>
+          <p class="text-xs text-slate-400 mb-4">Paste kickoff meeting notes, client emails, or discovery call transcripts.</p>
+          <textarea id="rawText" rows="13" placeholder="e.g., Kickoff call with Alpha: Budget $35,000 approved. Launch beta by December. Blocker on OAuth setup..."
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500 leading-relaxed"></textarea>
+        </div>
+        <div class="mt-4 flex items-center justify-between">
+          <button onclick="runExtraction()"
+                  class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg text-xs transition">
+            Extract Intelligence
+          </button>
+          <button onclick="loadAgencyReport()"
+                  class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium px-4 py-2 rounded-lg text-xs transition">
+            Load Full Agency Brief
+          </button>
+        </div>
+      </section>
+
+      <!-- Deliverable Output Panel -->
+      <section class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-semibold">Structured Deliverable</h2>
+            <div class="flex items-center gap-2">
+              <a id="exportBtn" target="_blank"
+                 class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition hidden font-medium">
+                Download PDF Report ↗
+              </a>
+              <button id="copyBtn" onclick="copyOutput()"
+                      class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded-md transition hidden font-medium">
+                Copy Markdown
+              </button>
+            </div>
+          </div>
+          <div id="statusBadge" class="hidden mb-4 px-3 py-1.5 rounded-lg text-xs font-semibold font-mono"></div>
+          <div id="outputContainer" class="bg-slate-900 border border-slate-700 rounded-lg p-4 text-xs font-mono text-slate-300 min-h-[340px] max-h-[480px] overflow-y-auto whitespace-pre-wrap">
+Awaiting input... Paste transcript on the left and trigger extraction.
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- TAB 2: Tenant Provisioning & Governance -->
+    <main id="tabProvision" class="hidden max-w-2xl bg-slate-800/60 border border-slate-700/60 rounded-xl p-6">
+      <h2 class="text-base font-semibold mb-1">Provision New Agency Tenant</h2>
+      <p class="text-xs text-slate-400 mb-6">Create isolated organizational units with dedicated monthly API rate quotas.</p>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">Master Admin Key</label>
+          <input id="adminKey" type="password" value="dev_secret_key_123" placeholder="Enter MASTER_ADMIN_KEY"
+                 class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono focus:border-indigo-500 outline-none" />
+        </div>
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">Agency / Client Name</label>
+          <input id="newTenantName" type="text" placeholder="e.g., Apex Media Partners"
+                 class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-indigo-500 outline-none" />
+        </div>
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">Monthly Request Allocation</label>
+          <input id="newTenantQuota" type="number" value="100" min="1" max="10000"
+                 class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono focus:border-indigo-500 outline-none" />
+        </div>
+        <button onclick="provisionTenant()"
+                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-lg text-xs transition">
+          Provision Tenant & Generate Key
+        </button>
+
+        <div id="provisionResult" class="hidden mt-4 p-4 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 font-mono text-xs">
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      const isStudio = tab === 'studio';
+      document.getElementById('tabStudio').classList.toggle('hidden', !isStudio);
+      document.getElementById('tabProvision').classList.toggle('hidden', isStudio);
+
+      document.getElementById('tabBtnStudio').className = isStudio
+        ? 'pb-2 border-b-2 border-indigo-500 text-indigo-400 transition'
+        : 'pb-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition';
+
+      document.getElementById('tabBtnProvision').className = !isStudio
+        ? 'pb-2 border-b-2 border-indigo-500 text-indigo-400 transition'
+        : 'pb-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition';
+    }
+
+    async function refreshUsage() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      const quotaCard = document.getElementById('quotaCard');
+      if (!apiKey) return;
+
+      try {
+        const res = await fetch('/api/v1/tenant/usage', {
+          headers: { 'x-api-key': apiKey }
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        
+        document.getElementById('tenantLabel').innerText = data.client_name;
+        document.getElementById('quotaRemaining').innerText = `${data.remaining_requests} / ${data.monthly_quota} left`;
+        quotaCard.classList.remove('hidden');
+      } catch {
+        quotaCard.classList.add('hidden');
+      }
+    }
+
+    async function runExtraction() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      const rawText = document.getElementById('rawText').value.trim();
+      const output = document.getElementById('outputContainer');
+      const badge = document.getElementById('statusBadge');
+      const copyBtn = document.getElementById('copyBtn');
+
+      if (!apiKey || !rawText) {
+        alert('Please fill in both API Key and Transcript text.');
+        return;
+      }
+
+      output.innerText = 'Executing asynchronous Groq extraction loop...';
+      badge.className = 'mb-4 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-400 block font-mono';
+      badge.innerText = 'Status: Processing Ingestion';
+
+      try {
+        const res = await fetch('/api/v1/extract-intelligence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+          body: JSON.stringify({ raw_text: rawText })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Extraction failed');
+
+        badge.className = 'mb-4 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-400 block font-mono';
+        badge.innerText = `Success: Sentiment ${data.sentiment}`;
+        output.innerText = JSON.stringify(data, null, 2);
+        copyBtn.classList.remove('hidden');
+        refreshUsage();
+      } catch (err) {
+        badge.className = 'mb-4 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/20 text-rose-400 block font-mono';
+        badge.innerText = 'Error';
+        output.innerText = err.message;
+      }
+    }
+
+    async function loadAgencyReport() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      const output = document.getElementById('outputContainer');
+      const badge = document.getElementById('statusBadge');
+      const copyBtn = document.getElementById('copyBtn');
+      const exportBtn = document.getElementById('exportBtn');
+
+      if (!apiKey) {
+        alert('Enter an API Key to fetch client deliverables.');
+        return;
+      }
+
+      output.innerText = 'Aggregating tenant corpus into executive brief...';
+
+      try {
+        const res = await fetch('/api/v1/reports/client-brief', {
+          headers: { 'x-api-key': apiKey }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Failed to fetch brief');
+
+        badge.className = 'mb-4 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-500/20 text-indigo-400 block font-mono';
+        badge.innerText = `Audit Ready: ${data.org_name}`;
+        output.innerText = data.markdown_deliverable;
+        copyBtn.classList.remove('hidden');
+
+        exportBtn.href = `/reports/export?api_key=${encodeURIComponent(apiKey)}`;
+        exportBtn.classList.remove('hidden');
+        refreshUsage();
+      } catch (err) {
+        badge.className = 'mb-4 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/20 text-rose-400 block font-mono';
+        badge.innerText = 'Error';
+        output.innerText = err.message;
+      }
+    }
+
+    async function provisionTenant() {
+      const adminKey = document.getElementById('adminKey').value.trim();
+      const name = document.getElementById('newTenantName').value.trim();
+      const quota = parseInt(document.getElementById('newTenantQuota').value, 10);
+      const resBox = document.getElementById('provisionResult');
+
+      if (!name || isNaN(quota)) {
+        alert('Please specify a client name and valid quota.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/v1/admin/tenants', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': adminKey },
+          body: JSON.stringify({ client_name: name, monthly_quota: quota })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Failed to provision tenant');
+
+        resBox.classList.remove('hidden');
+        resBox.innerHTML = `
+          <p class="text-emerald-400 font-bold mb-2">Tenant Provisioned Successfully</p>
+          <p><span class="text-slate-400">Organization:</span> ${data.org_name}</p>
+          <p><span class="text-slate-400">Monthly Quota:</span> ${data.monthly_quota} calls</p>
+          <p class="mt-2"><span class="text-slate-400">Assigned API Key:</span></p>
+          <input type="text" readonly value="${data.api_key}" 
+                 class="w-full bg-slate-950 border border-slate-700 px-2 py-1 rounded text-amber-300 font-bold mt-1 select-all" />
+        `;
+      } catch (err) {
+        resBox.classList.remove('hidden');
+        resBox.innerHTML = `<p class="text-rose-400">Error: ${err.message}</p>`;
+      }
+    }
+
+    function copyOutput() {
+      navigator.clipboard.writeText(document.getElementById('outputContainer').innerText);
+      alert('Markdown Brief copied to clipboard.');
+    }
+
+    window.addEventListener('DOMContentLoaded', refreshUsage);
+  </script>
+</body>
+</html>
