@@ -104,6 +104,6 @@ pytest -s
 > Multi-tenant asynchronous intelligence engine designed for autonomous operations. Features tenant key hashing, monthly quota governance, live operational alerts (Discord/Slack), and executive print-ready PDF brief synthesis.
 
 ### Public Walkthrough
-- [Watch the 60s Demo on LinkedIn](https://lnkd.in/p/dcVZPa4C) *(replace with your direct post link)*
-- [Launch Announcement on X](https://x.com/RemoKING17/status/2108416129039499655?s=20) *(replace with your tweet link)*
+- [Watch the 60s Demo on LinkedIn](https://lnkd.in/p/dcVZPa4C)
+- [Launch Announcement on X](https://x.com/RemoKING17/status/2108416129039499655?s=20)
 - [YouTube](https://www.youtube.com/watch?v=ST0TsyK9mrs)
