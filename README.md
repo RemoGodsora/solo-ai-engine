@@ -93,3 +93,16 @@ Run the test suite to verify tenant isolation, background agent tools, and repor
 ```bash
 pytest -s
 ```
+
+# Solo AI Studio (`v1.2.0`)
+
+[![CI Pipeline](https://github.com/RemoGodsora/solo-ai-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/RemoGodsora/solo-ai-engine/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.11-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)
+![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED.svg)
+
+> Multi-tenant asynchronous intelligence engine designed for autonomous operations. Features tenant key hashing, monthly quota governance, live operational alerts (Discord/Slack), and executive print-ready PDF brief synthesis.
+
+### Public Walkthrough
+- [Watch the 60s Demo on LinkedIn](https://www.linkedin.com/feed/) *(replace with your direct post link)*
+- [Launch Announcement on X](https://x.com/) *(replace with your tweet link)*
