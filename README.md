@@ -106,4 +106,4 @@ pytest -s
 ### Public Walkthrough
 - [Watch the 60s Demo on LinkedIn](https://lnkd.in/p/dcVZPa4C)
 - [Launch Announcement on X](https://x.com/RemoKING17/status/2108416129039499655?s=20)
-- [YouTube](https://www.youtube.com/watch?v=ST0TsyK9mrs)
+- [YouTube Walkthrough](https://www.youtube.com/watch?v=ST0TsyK9mrs)
