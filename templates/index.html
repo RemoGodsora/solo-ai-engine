@@ -13,7 +13,7 @@
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
           Solo AI Studio
-          <span class="text-xs bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full font-mono font-medium">Multi-Tenant v1.2</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">Multi-Tenant v1.3</span>
         </h1>
         <p class="text-xs text-slate-400">Deterministic Intelligence Engine & Governance Gateway</p>
       </div>
@@ -96,6 +96,23 @@ Awaiting input... Paste transcript on the left and trigger extraction.
 
     <!-- TAB 2: Tenant Provisioning & Governance -->
     <main id="tabProvision" class="hidden max-w-2xl bg-slate-800/60 border border-slate-700/60 rounded-xl p-6">
+      
+      <!-- Live Studio Telemetry Bar -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; text-align: center;">
+          <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Active Tenants</div>
+          <div id="stat-tenants" style="font-size: 1.5rem; font-weight: 700; color: #38bdf8; margin-top: 4px;">--</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; text-align: center;">
+          <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Extractions Ran</div>
+          <div id="stat-extractions" style="font-size: 1.5rem; font-weight: 700; color: #a855f7; margin-top: 4px;">--</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; text-align: center;">
+          <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Quota Burn Rate</div>
+          <div id="stat-burn" style="font-size: 1.5rem; font-weight: 700; color: #22c55e; margin-top: 4px;">--%</div>
+        </div>
+      </div>
+
       <h2 class="text-base font-semibold mb-1">Provision New Agency Tenant</h2>
       <p class="text-xs text-slate-400 mb-6">Create isolated organizational units with dedicated monthly API rate quotas.</p>
 
@@ -139,7 +156,27 @@ Awaiting input... Paste transcript on the left and trigger extraction.
       document.getElementById('tabBtnProvision').className = !isStudio
         ? 'pb-2 border-b-2 border-indigo-500 text-indigo-400 transition'
         : 'pb-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition';
+
+      if (!isStudio) {
+        loadAnalytics();
+      }
     }
+
+    async function loadAnalytics() {
+      try {
+        const res = await fetch('/v1/analytics/overview');
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById('stat-tenants').innerText = data.total_tenants;
+        document.getElementById('stat-extractions').innerText = data.total_extractions;
+        document.getElementById('stat-burn').innerText = `${data.burn_rate_percentage}%`;
+      } catch (err) {
+        console.error("Telemetry fetch failed", err);
+      }
+    }
+
+    // Initial load
+    loadAnalytics();
 
     async function refreshUsage() {
       const apiKey = document.getElementById('apiKey').value.trim();

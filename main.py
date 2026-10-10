@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field, ConfigDict
 from groq import AsyncGroq
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from database import Base, engine, init_db, get_db, async_session_maker, ExtractionRecord, AgentJobRecord, Organization
 
@@ -505,6 +505,34 @@ async def create_tenant(
         api_key=new_org.api_key,
         monthly_quota=new_org.monthly_quota
     )
+
+@app.get("/v1/analytics/overview")
+async def get_analytics_overview(
+    db: AsyncSession = Depends(get_db)
+):
+    # Total organizations and total capacity
+    org_stats = await db.execute(
+        select(
+            func.count(Organization.id),
+            func.coalesce(func.sum(Organization.monthly_quota), 0),
+            func.coalesce(func.sum(Organization.usage_count), 0)
+        )
+    )
+    total_tenants, total_quota_pool, total_quota_used = org_stats.one()
+
+    # Total successful extractions executed
+    extraction_count_res = await db.execute(
+        select(func.count(ExtractionRecord.id))
+    )
+    total_extractions = extraction_count_res.scalar() or 0
+
+    return {
+        "total_tenants": total_tenants,
+        "total_extractions": total_extractions,
+        "quota_pool_allocated": total_quota_pool,
+        "quota_pool_consumed": total_quota_used,
+        "burn_rate_percentage": round((total_quota_used / total_quota_pool * 100), 2) if total_quota_pool > 0 else 0.0
+    }
 
 # ==============================================================================
 # BACKGROUND WORKER RUNNER
